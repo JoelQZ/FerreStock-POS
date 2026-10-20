@@ -1,0 +1,30 @@
+:root {
+  --carbon: #23282D;
+  --acero: #3B434B;
+  --acero-oscuro: #2A3036;
+  --madera: #C08A55;
+  --fondo: #F3F3F0;
+  --borde: #E1E1DC;
+  --titulos: 'Oswald', sans-serif;
+  --texto: 'Barlow', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--texto);
+  color: var(--carbon);
+  background: var(--fondo);
+}
+
+h1 {
+  font-family: var(--titulos);
+  text-transform: uppercase;
+}
+
+.inicio {
+  padding: 32px;
+}
