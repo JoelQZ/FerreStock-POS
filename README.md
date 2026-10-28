@@ -56,7 +56,14 @@ FerreStock-POS/
 └── pos-frontend-react/          ← POS del cajero (puerto 5174)
     ├── .env.example
     └── src/
-        └── styles/global.css    ← colores y fuentes del estilo "Acero y madera"
+        ├── api/                 ← cliente axios (login → Django, datos → Spring Boot) y datos de prueba
+        ├── components/          ← Cabecera, Encabezado, Carrito, Aviso, Campo, Icono…
+        ├── context/             ← sesión (AuthProvider, useAuth)
+        ├── layouts/             ← LayoutPos (header carbón + menú en píldoras)
+        ├── pages/               ← Login, NuevaVenta, CierreCaja, MisVentas
+        ├── routes/              ← RutaPrivada
+        ├── utils/               ← carrito.js (IGV en céntimos) + carrito.test.js, formato, roles, menú
+        └── styles/global.css    ← estilo "Acero y madera"
 ```
 
 Las subcarpetas internas (`entity/`, `repository/`, `service/`, `controller/`, `security/` en Spring Boot; `api/`, `pages/`, `components/`, `context/` en React) se agregan a medida que se desarrollan las historias de usuario.
@@ -100,7 +107,10 @@ mvnw test
 cd pos-frontend-react
 npm install
 npm run dev
+npm test
 ```
+
+Copiar `.env.example` como `.env` (`VITE_AUTH_URL` → Django 8000, `VITE_API_URL` → Spring Boot 8080). El login necesita Django encendido; los productos, ventas y turnos usan por ahora los datos de prueba de `src/api/datosPrueba.js`.
 
 Abrir http://localhost:5174
 
@@ -125,9 +135,10 @@ Menú: **Nueva venta · Cierre de caja · Mis ventas**.
 - [x] Estructura base de Spring Boot conectada a `ferrestock_db` (`ddl-auto=validate`)
 - [x] Estructura base del POS React (puerto 5174, fuentes y colores)
 - [ ] Spring Boot: validar el JWT de Django y exponer `GET /api/productos`
-- [ ] Login del POS contra Django (CAJERO, ADMINISTRADOR y DUENO)
-- [ ] HU-05: pantalla "Nueva venta" con carrito, op. gravada, IGV 18 % y total (pruebas con Vitest)
-- [ ] Cierre de caja y Mis ventas
+- [x] Login del POS contra Django (CAJERO, ADMINISTRADOR y DUENO)
+- [x] Diseño de "Nueva venta" (HU-05): carrito, op. gravada, IGV 18 %, total, comprobante y pago, con pruebas Vitest
+- [x] Diseño de Cierre de caja y Mis ventas con datos de prueba
+- [ ] Conectar las pantallas a Spring Boot
 
 ## 8. Forma de trabajo
 
