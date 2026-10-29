@@ -19,6 +19,6 @@ server:
 
 ferrestock:
   jwt:
-    secret: "clave_secreta_super_segura_ferrestock_12345"
+    secret: "${JWT_SECRET}"
   cors:
     origenes: "http://localhost:5174"
