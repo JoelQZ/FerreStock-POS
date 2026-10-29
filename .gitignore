@@ -8,4 +8,4 @@ target/
 .vscode/
 *.iml
 
-.env
+pos-backend-springboot/.env

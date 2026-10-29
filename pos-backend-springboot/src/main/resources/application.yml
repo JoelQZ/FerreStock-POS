@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: pos-backend-springboot
+  datasource:
+    url: "jdbc:mysql://127.0.0.1:3306/ferrestock_db?serverTimezone=America/Lima&characterEncoding=UTF-8"
+    username: "root"
+    password: "HO14JOEL$@yo"
+  jpa:
+    hibernate:
+      ddl-auto: "validate"
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: "America/Lima"
+
+server:
+  port: 8080
+
+ferrestock:
+  jwt:
+    secret: "clave_secreta_super_segura_ferrestock_12345"
+  cors:
+    origenes: "http://localhost:5174"
