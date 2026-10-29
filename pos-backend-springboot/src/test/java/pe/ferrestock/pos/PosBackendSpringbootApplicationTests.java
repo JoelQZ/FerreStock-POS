@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.http.MediaType;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -53,9 +55,33 @@ class PosBackendSpringbootApplicationTests {
 				.andExpect(content().json("{\"detail\":\"No tienes permisos para realizar esta acción\"}"));
 	}
 
+	@Test
+	void turnoActualDevuelveNullCuandoElUsuarioNoTieneTurnoAbierto() throws Exception {
+		mockMvc.perform(get("/api/turnos/actual")
+						.header("Authorization", "Bearer " + token("CAJERO", Long.MAX_VALUE)))
+				.andExpect(status().isOk())
+				.andExpect(content().string("null"));
+	}
+
+	@Test
+	void validaMontoInicialConNombreDeCampoSnakeCase() throws Exception {
+		mockMvc.perform(post("/api/turnos/abrir")
+						.header("Authorization", "Bearer " + token("CAJERO"))
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"monto_inicial\":\"-1.00\"}"))
+				.andExpect(status().isBadRequest())
+				.andExpect(content().json(
+						"{\"monto_inicial\":\"El monto inicial debe ser mayor o igual a 0.00\"}"
+				));
+	}
+
 	private String token(String rol) {
+		return token(rol, 42L);
+	}
+
+	private String token(String rol, Long userId) {
 		return Jwts.builder()
-				.claim("user_id", 42)
+				.claim("user_id", userId)
 				.claim("usuario", "usuario-prueba")
 				.claim("rol", rol)
 				.signWith(Keys.hmacShaKeyFor(JWT_SECRET.getBytes(StandardCharsets.UTF_8)), Jwts.SIG.HS256)

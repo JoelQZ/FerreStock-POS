@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> manejarValidacion(MethodArgumentNotValidException exception) {
         Map<String, String> errores = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
-                errores.putIfAbsent(error.getField(), mensajeValidacion(error.getDefaultMessage()))
+                errores.putIfAbsent(aSnakeCase(error.getField()), mensajeValidacion(error.getDefaultMessage()))
         );
         return ResponseEntity.badRequest().body(errores);
     }
@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> manejarBinding(BindException exception) {
         Map<String, String> errores = new LinkedHashMap<>();
         exception.getBindingResult().getFieldErrors().forEach(error ->
-                errores.putIfAbsent(error.getField(), mensajeValidacion(error.getDefaultMessage()))
+                errores.putIfAbsent(aSnakeCase(error.getField()), mensajeValidacion(error.getDefaultMessage()))
         );
         return ResponseEntity.badRequest().body(errores);
     }
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
         for (ConstraintViolation<?> violation : exception.getConstraintViolations()) {
             String ruta = violation.getPropertyPath().toString();
             String campo = ruta.substring(ruta.lastIndexOf('.') + 1);
-            errores.putIfAbsent(campo, mensajeValidacion(violation.getMessage()));
+            errores.putIfAbsent(aSnakeCase(campo), mensajeValidacion(violation.getMessage()));
         }
         return ResponseEntity.badRequest().body(errores);
     }
@@ -77,5 +77,9 @@ public class GlobalExceptionHandler {
 
     private String mensajeValidacion(String message) {
         return message == null || message.isBlank() ? "Valor inválido" : message;
+    }
+
+    private String aSnakeCase(String campo) {
+        return campo.replaceAll("([a-z0-9])([A-Z])", "$1_$2").toLowerCase();
     }
 }
