@@ -43,4 +43,9 @@ public class TipoComprobante {
     public Integer getCorrelativoActual() {
         return correlativoActual;
     }
+
+    public Integer incrementarCorrelativo() {
+        correlativoActual = Math.addExact(correlativoActual, 1);
+        return correlativoActual;
+    }
 }

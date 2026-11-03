@@ -38,6 +38,16 @@ public interface TurnoRepository extends JpaRepository<Turno, Long> {
     Optional<Turno> buscarTurnoAbiertoParaCerrar(@Param("usuarioId") Long usuarioId);
 
     @Query(value = """
+            SELECT *
+            FROM turno
+            WHERE id_usuario = :usuarioId AND estado = 'ABIERTO'
+            ORDER BY apertura DESC
+            LIMIT 1
+            FOR UPDATE
+            """, nativeQuery = true)
+    Optional<Turno> bloquearTurnoAbiertoParaVenta(@Param("usuarioId") Long usuarioId);
+
+    @Query(value = """
             SELECT COALESCE(SUM(
                 CASE WHEN LOWER(TRIM(mp.nombre)) = 'efectivo' THEN p.monto ELSE 0 END
             ), 0)

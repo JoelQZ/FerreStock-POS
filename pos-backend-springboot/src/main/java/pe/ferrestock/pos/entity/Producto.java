@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 @Table(name = "producto")
@@ -106,5 +107,15 @@ public class Producto {
 
     public UnidadMedida getUnidadMedida() {
         return unidadMedida;
+    }
+
+    public BigDecimal descontarStock(BigDecimal cantidad) {
+        BigDecimal stockAnterior = stock;
+        stock = stock.subtract(cantidad).setScale(stock.scale(), RoundingMode.HALF_UP);
+        return stockAnterior;
+    }
+
+    public void reponerStock(BigDecimal cantidad) {
+        stock = stock.add(cantidad).setScale(stock.scale(), RoundingMode.HALF_UP);
     }
 }
