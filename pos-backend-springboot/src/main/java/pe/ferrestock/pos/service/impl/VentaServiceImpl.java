@@ -10,6 +10,7 @@ import pe.ferrestock.pos.dto.PagoVentaRequest;
 import pe.ferrestock.pos.dto.VentaRequest;
 import pe.ferrestock.pos.dto.VentaResponse;
 import pe.ferrestock.pos.entity.DetalleVenta;
+import pe.ferrestock.pos.entity.EstadoVenta;
 import pe.ferrestock.pos.entity.EstadoTurno;
 import pe.ferrestock.pos.entity.MetodoPago;
 import pe.ferrestock.pos.entity.Pago;
@@ -182,6 +183,46 @@ public class VentaServiceImpl implements VentaService {
         return ventaRepository.findAllByIdTurnoOrderByFechaHoraDesc(turno.getIdTurno()).stream()
                 .map(this::crearRespuestaCompleta)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public VentaResponse anular(Long idUsuario, Long idVenta, String motivo) {
+        Venta venta = ventaRepository.bloquearPorId(idVenta)
+                .orElseThrow(() -> new ResourceNotFoundException("Venta no encontrada"));
+        if (venta.getEstado() != EstadoVenta.COMPLETADA) {
+            throw new IllegalStateException("Solo se pueden anular ventas COMPLETADAS");
+        }
+
+        List<DetalleVenta> detalles = detalleVentaRepository.findAllByIdVentaOrderByIdDetalleAsc(idVenta);
+        Map<Long, BigDecimal> cantidades = new LinkedHashMap<>();
+        for (DetalleVenta detalle : detalles) {
+            cantidades.merge(detalle.getIdProducto(), detalle.getCantidad(), BigDecimal::add);
+        }
+        List<Producto> productos = productoRepository.bloquearPorIdsOrdenados(
+                new TreeSet<>(cantidades.keySet())
+        );
+        if (productos.size() != cantidades.size()) {
+            throw new ResourceNotFoundException("No se encontraron todos los productos de la venta");
+        }
+
+        LocalDateTime fechaAnulacion = LocalDateTime.now(ZONA_LIMA);
+        movimientoInventarioService.registrarEntradas(
+                idUsuario,
+                idVenta,
+                productos,
+                cantidades,
+                fechaAnulacion
+        );
+        venta.anular(motivo, fechaAnulacion, idUsuario);
+
+        return VentaResponse.from(
+                venta,
+                detalles.stream().map(DetalleVentaResponse::from).toList(),
+                pagoRepository.findAllByIdVentaOrderByIdPagoAsc(idVenta).stream()
+                        .map(PagoResponse::from)
+                        .toList()
+        );
     }
 
     private Map<Long, BigDecimal> agruparCantidades(List<DetalleVentaRequest> detalles) {

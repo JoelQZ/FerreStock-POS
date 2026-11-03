@@ -15,4 +15,12 @@ public interface MovimientoInventarioService {
             Map<Long, BigDecimal> cantidades,
             LocalDateTime fecha
     );
+
+    void registrarEntradas(
+            Long idUsuario,
+            Long idVenta,
+            List<Producto> productosBloqueados,
+            Map<Long, BigDecimal> cantidades,
+            LocalDateTime fecha
+    );
 }

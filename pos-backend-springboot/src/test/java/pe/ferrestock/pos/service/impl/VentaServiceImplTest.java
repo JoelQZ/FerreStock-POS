@@ -6,7 +6,10 @@ import pe.ferrestock.pos.dto.DetalleVentaRequest;
 import pe.ferrestock.pos.dto.PagoVentaRequest;
 import pe.ferrestock.pos.dto.VentaRequest;
 import pe.ferrestock.pos.entity.MetodoPago;
+import pe.ferrestock.pos.entity.DetalleVenta;
+import pe.ferrestock.pos.entity.EstadoVenta;
 import pe.ferrestock.pos.entity.Producto;
+import pe.ferrestock.pos.entity.MovimientoInventario;
 import pe.ferrestock.pos.entity.TipoComprobante;
 import pe.ferrestock.pos.entity.Turno;
 import pe.ferrestock.pos.entity.Venta;
@@ -125,6 +128,44 @@ class VentaServiceImplTest {
     }
 
     @Test
+    void calculaIgvDeVentaConVariosProductos() throws Exception {
+        Producto productoUno = producto(1L, "FER-0001", "38.90", "10.000", true);
+        Producto productoDos = producto(2L, "FER-0002", "2.30", "10.000", true);
+        Turno turno = mock(Turno.class);
+        when(turno.getIdTurno()).thenReturn(3L);
+        TipoComprobante comprobante = tipoComprobante("Boleta", 0);
+
+        when(turnoRepository.bloquearTurnoAbiertoParaVenta(41L)).thenReturn(Optional.of(turno));
+        when(tipoComprobanteRepository.bloquearPorId(2L)).thenReturn(Optional.of(comprobante));
+        when(productoRepository.bloquearPorIdsOrdenados(anyCollection()))
+                .thenReturn(List.of(productoUno, productoDos));
+        MetodoPago efectivo = metodoPago("Efectivo", false);
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(efectivo));
+        when(negocioRepository.obtenerPorcentajesIgv()).thenReturn(List.of(new BigDecimal("18.00")));
+        when(ventaRepository.save(any(Venta.class))).thenAnswer(invocation -> {
+            Venta venta = invocation.getArgument(0);
+            asignarCampo(venta, "idVenta", 99L);
+            return venta;
+        });
+        when(detalleVentaRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(pagoRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = ventaService.registrar(41L, new VentaRequest(
+                null,
+                2L,
+                List.of(
+                        new DetalleVentaRequest(1L, new BigDecimal("2.000")),
+                        new DetalleVentaRequest(2L, new BigDecimal("3.500"))
+                ),
+                List.of(new PagoVentaRequest(1L, new BigDecimal("85.85"), null, null))
+        ));
+
+        assertEquals(new BigDecimal("85.85"), response.total());
+        assertEquals(new BigDecimal("72.75"), response.subtotal());
+        assertEquals(new BigDecimal("13.10"), response.igv());
+    }
+
+    @Test
     void descuentaStockYRegistraElMovimientoDeInventario() throws Exception {
         MovimientoInventarioRepository repository = mock(MovimientoInventarioRepository.class);
         Producto producto = producto(8L, "FER-0008", "10.00", "5.000", true);
@@ -140,6 +181,98 @@ class VentaServiceImplTest {
 
         assertEquals(new BigDecimal("3.000"), producto.getStock());
         verify(repository).saveAll(any());
+    }
+
+    @Test
+    void devuelveStockYRegistraMovimientoDeEntrada() throws Exception {
+        MovimientoInventarioRepository repository = mock(MovimientoInventarioRepository.class);
+        Producto producto = producto(8L, "FER-0008", "10.00", "3.000", true);
+        MovimientoInventarioServiceImpl service = new MovimientoInventarioServiceImpl(repository);
+        when(repository.saveAll(any())).thenAnswer(invocation -> {
+            List<MovimientoInventario> movimientos = invocation.getArgument(0);
+            assertEquals(1, movimientos.size());
+            assertEquals(pe.ferrestock.pos.entity.TipoMovimientoInventario.ENTRADA,
+                    movimientos.getFirst().getTipo());
+            assertEquals(new BigDecimal("5.000"), movimientos.getFirst().getStockNuevo());
+            return movimientos;
+        });
+
+        service.registrarEntradas(
+                41L,
+                99L,
+                List.of(producto),
+                Map.of(8L, new BigDecimal("2.000")),
+                LocalDateTime.now()
+        );
+
+        assertEquals(new BigDecimal("5.000"), producto.getStock());
+        verify(repository).saveAll(any());
+    }
+
+    @Test
+    void rechazaPagosQueNoCubrenElTotal() throws Exception {
+        Producto producto = producto(8L, "FER-0008", "10.00", "5.000", true);
+        Turno turno = mock(Turno.class);
+        when(turno.getIdTurno()).thenReturn(3L);
+        when(turnoRepository.bloquearTurnoAbiertoParaVenta(41L)).thenReturn(Optional.of(turno));
+        when(tipoComprobanteRepository.bloquearPorId(2L)).thenReturn(Optional.of(tipoComprobante("Boleta", 0)));
+        when(productoRepository.bloquearPorIdsOrdenados(anyCollection())).thenReturn(List.of(producto));
+        MetodoPago yape = metodoPago("Yape", true);
+        when(metodoPagoRepository.findById(1L)).thenReturn(Optional.of(yape));
+        when(negocioRepository.obtenerPorcentajesIgv()).thenReturn(List.of(new BigDecimal("18.00")));
+
+        IllegalArgumentException error = assertThrows(
+                IllegalArgumentException.class,
+                () -> ventaService.registrar(41L, new VentaRequest(
+                        null,
+                        2L,
+                        List.of(new DetalleVentaRequest(8L, new BigDecimal("2.000"))),
+                        List.of(new PagoVentaRequest(1L, new BigDecimal("1.00"), null, "OP-123"))
+                ))
+        );
+
+        assertEquals("La suma de los pagos no cubre el total de la venta", error.getMessage());
+        verify(ventaRepository, never()).save(any());
+    }
+
+    @Test
+    void anulaVentaYSolicitaDevolucionDeStockConKardex() throws Exception {
+        Venta venta = Venta.completar(
+                LocalDateTime.now(),
+                new BigDecimal("16.95"),
+                new BigDecimal("3.05"),
+                new BigDecimal("20.00"),
+                "B001",
+                1,
+                null,
+                2L,
+                3L,
+                7L
+        );
+        asignarCampo(venta, "idVenta", 99L);
+        Producto producto = producto(8L, "FER-0008", "10.00", "3.000", true);
+        when(ventaRepository.bloquearPorId(99L)).thenReturn(Optional.of(venta));
+        when(detalleVentaRepository.findAllByIdVentaOrderByIdDetalleAsc(99L))
+                .thenReturn(List.of(DetalleVenta.crear(99L, 8L, new BigDecimal("2.000"),
+                        new BigDecimal("10.00"), new BigDecimal("20.00"))));
+        when(productoRepository.bloquearPorIdsOrdenados(anyCollection())).thenReturn(List.of(producto));
+        when(pagoRepository.findAllByIdVentaOrderByIdPagoAsc(99L)).thenReturn(List.of());
+
+        var response = ventaService.anular(41L, 99L, "Cliente canceló la compra");
+
+        assertEquals(EstadoVenta.ANULADA.name(), response.estado());
+        assertEquals("Cliente canceló la compra", venta.getMotivoAnulacion());
+        assertEquals(41L, venta.getIdUsuarioAnula());
+        org.junit.jupiter.api.Assertions.assertNotNull(venta.getFechaAnulacion());
+        verify(ventaRepository).bloquearPorId(99L);
+        verify(productoRepository).bloquearPorIdsOrdenados(anyCollection());
+        verify(movimientoInventarioService).registrarEntradas(
+                org.mockito.ArgumentMatchers.eq(41L),
+                org.mockito.ArgumentMatchers.eq(99L),
+                any(),
+                any(),
+                any()
+        );
     }
 
     @Test

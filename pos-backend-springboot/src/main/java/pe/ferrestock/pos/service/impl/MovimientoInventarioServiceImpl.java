@@ -49,4 +49,31 @@ public class MovimientoInventarioServiceImpl implements MovimientoInventarioServ
         }
         movimientoInventarioRepository.saveAll(movimientos);
     }
+
+    @Override
+    @Transactional
+    public void registrarEntradas(
+            Long idUsuario,
+            Long idVenta,
+            List<Producto> productosBloqueados,
+            Map<Long, BigDecimal> cantidades,
+            LocalDateTime fecha
+    ) {
+        List<MovimientoInventario> movimientos = new ArrayList<>();
+        for (Producto producto : productosBloqueados) {
+            BigDecimal cantidad = cantidades.get(producto.getIdProducto());
+            BigDecimal stockAnterior = producto.getStock();
+            producto.reponerStock(cantidad);
+            movimientos.add(MovimientoInventario.entrada(
+                    producto.getIdProducto(),
+                    idUsuario,
+                    idVenta,
+                    cantidad,
+                    stockAnterior,
+                    producto.getStock(),
+                    fecha
+            ));
+        }
+        movimientoInventarioRepository.saveAll(movimientos);
+    }
 }

@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 public class Negocio {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "id_negocio")
     private Long id;
 
     @Column(name = "igv_porcentaje")

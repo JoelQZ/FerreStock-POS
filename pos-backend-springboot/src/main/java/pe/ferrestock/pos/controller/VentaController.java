@@ -4,12 +4,14 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import pe.ferrestock.pos.dto.VentaRequest;
+import pe.ferrestock.pos.dto.AnularVentaRequest;
 import pe.ferrestock.pos.dto.VentaResponse;
 import pe.ferrestock.pos.security.UsuarioAutenticado;
 import pe.ferrestock.pos.service.VentaService;
@@ -33,6 +35,15 @@ public class VentaController {
             @Valid @RequestBody VentaRequest request
     ) {
         return ventaService.registrar(usuario.userId(), request);
+    }
+
+    @PostMapping("/{id}/anular")
+    public VentaResponse anular(
+            @AuthenticationPrincipal UsuarioAutenticado usuario,
+            @PathVariable Long id,
+            @Valid @RequestBody AnularVentaRequest request
+    ) {
+        return ventaService.anular(usuario.userId(), id, request.motivo());
     }
 
     @GetMapping("/turno-actual")

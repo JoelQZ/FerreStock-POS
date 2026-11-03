@@ -142,4 +142,26 @@ public class Venta {
     public Long getIdUsuario() {
         return idUsuario;
     }
+
+    public String getMotivoAnulacion() {
+        return motivoAnulacion;
+    }
+
+    public LocalDateTime getFechaAnulacion() {
+        return fechaAnulacion;
+    }
+
+    public Long getIdUsuarioAnula() {
+        return idUsuarioAnula;
+    }
+
+    public void anular(String motivo, LocalDateTime fecha, Long idUsuario) {
+        if (estado != EstadoVenta.COMPLETADA) {
+            throw new IllegalStateException("Solo se pueden anular ventas COMPLETADAS");
+        }
+        estado = EstadoVenta.ANULADA;
+        motivoAnulacion = motivo;
+        fechaAnulacion = fecha;
+        idUsuarioAnula = idUsuario;
+    }
 }

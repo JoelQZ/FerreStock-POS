@@ -70,6 +70,27 @@ public class MovimientoInventario {
         return movimiento;
     }
 
+    public static MovimientoInventario entrada(
+            Long idProducto,
+            Long idUsuario,
+            Long idVenta,
+            BigDecimal cantidad,
+            BigDecimal stockAnterior,
+            BigDecimal stockNuevo,
+            LocalDateTime fecha
+    ) {
+        MovimientoInventario movimiento = new MovimientoInventario();
+        movimiento.idProducto = idProducto;
+        movimiento.idUsuario = idUsuario;
+        movimiento.idVenta = idVenta;
+        movimiento.tipo = TipoMovimientoInventario.ENTRADA;
+        movimiento.cantidad = cantidad;
+        movimiento.stockAnterior = stockAnterior;
+        movimiento.stockNuevo = stockNuevo;
+        movimiento.fecha = fecha;
+        return movimiento;
+    }
+
     public Long getIdMovimiento() {
         return idMovimiento;
     }
