@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().hasAnyRole("CAJERO", "ADMINISTRADOR", "DUENO"))
+                        .anyRequest().hasAnyRole("CAJERO", "ADMINISTRADOR"))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

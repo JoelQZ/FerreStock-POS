@@ -135,7 +135,7 @@ Menú: **Nueva venta · Cierre de caja · Mis ventas**.
 - [x] Estructura base de Spring Boot conectada a `ferrestock_db` (`ddl-auto=validate`)
 - [x] Estructura base del POS React (puerto 5174, fuentes y colores)
 - [ ] Spring Boot: validar el JWT de Django y exponer `GET /api/productos`
-- [x] Login del POS contra Django (CAJERO, ADMINISTRADOR y DUENO)
+- [x] Login del POS contra Django (CAJERO y ADMINISTRADOR)
 - [x] Diseño de "Nueva venta" (HU-05): carrito, op. gravada, IGV 18 %, total, comprobante y pago, con pruebas Vitest
 - [x] Diseño de Cierre de caja y Mis ventas con datos de prueba
 - [ ] Conectar las pantallas a Spring Boot

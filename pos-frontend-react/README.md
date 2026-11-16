@@ -21,7 +21,7 @@ npm install
 npm run dev
 ```
 
-Abrir **http://localhost:5174** e iniciar sesión con un usuario de rol **CAJERO**, **ADMINISTRADOR** o **DUENO** (los mismos usuarios del Admin).
+Abrir **http://localhost:5174** e iniciar sesión con un usuario de rol **CAJERO** o **ADMINISTRADOR** (los mismos usuarios del Admin).
 
 | Comando | Qué hace |
 |---|---|
@@ -45,7 +45,7 @@ Abrir **http://localhost:5174** e iniciar sesión con un usuario de rol **CAJERO
 
 | Ruta | Pantalla | Qué permite |
 |---|---|---|
-| `/login` | **Login** | Iniciar sesión contra Django. Solo entran CAJERO, ADMINISTRADOR y DUENO |
+| `/login` | **Login** | Iniciar sesión contra Django. Solo entran CAJERO y ADMINISTRADOR |
 | `/nueva-venta` | **Nueva venta** (HU-05) | Buscar productos, armar el carrito, elegir comprobante y pago, y confirmar la venta |
 | `/cierre-caja` | **Cierre de caja** | Abrir el turno con un monto inicial, ver el resumen y cerrarlo contando el efectivo |
 | `/mis-ventas` | **Mis ventas** | Ver las ventas del turno, su detalle y anularlas con un motivo |
@@ -113,7 +113,7 @@ src/
 │   ├── carrito.test.js     ← pruebas Vitest
 │   ├── formato.js          ← soles, cantidades, horas (America/Lima), comprobante
 │   ├── errores.js          ← convierte errores de la API en mensajes
-│   ├── roles.js            ← roles permitidos y normalización (DUEÑO → DUENO)
+│   ├── roles.js            ← roles permitidos y normalización del rol
 │   ├── menu.js             ← opciones del menú
 │   └── useTurno.js         ← hook del turno actual
 └── styles/global.css       ← estilo "Acero y madera"
@@ -128,7 +128,7 @@ src/
 - El login va a `POST {VITE_AUTH_URL}/auth/login/` (Django) y guarda `access`, `refresh` y `usuario` en `localStorage` (`ferrestock_pos_sesion`).
 - Cada petición a Spring Boot lleva `Authorization: Bearer <access>`.
 - Si Spring Boot responde **401**, el cliente renueva el token con `POST {VITE_AUTH_URL}/auth/refresh/` y repite la petición. Si no puede, cierra la sesión.
-- El rol se normaliza a mayúsculas sin tilde: `Dueño` → `DUENO`.
+- El rol se normaliza a mayúsculas sin tilde: `Cajero` → `CAJERO`.
 
 ---
 

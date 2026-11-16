@@ -1,8 +1,7 @@
-export const ROLES_POS = ['CAJERO', 'ADMINISTRADOR', 'DUENO']
+export const ROLES_POS = ['CAJERO', 'ADMINISTRADOR']
 
 export const NOMBRE_ROL = {
   ADMINISTRADOR: 'Admin',
-  DUENO: 'Dueño',
   CAJERO: 'Cajero',
 }
 
